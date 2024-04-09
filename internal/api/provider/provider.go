@@ -35,6 +35,9 @@ type Claims struct {
 	Iat     float64 `json:"iat,omitempty" structs:"iat,omitempty"`
 	Exp     float64 `json:"exp,omitempty" structs:"exp,omitempty"`
 
+	// OAuth provider token required for revoking after account deletion
+	ProviderAccessToken string `json:"provider_access_token,omitempty" structs:"provider_access_token,omitempty"`
+
 	// Default profile claims
 	Name              string `json:"name,omitempty" structs:"name,omitempty"`
 	FamilyName        string `json:"family_name,omitempty" structs:"family_name,omitempty"`
