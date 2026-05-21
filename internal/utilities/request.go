@@ -111,12 +111,17 @@ func IsRedirectURLValid(config *conf.GlobalConfiguration, redirectURL string) bo
 
 	scheme := strings.TrimSuffix(strings.ToLower(refurl.Scheme), ":")
 	isHTTP := scheme == "http" || scheme == "https"
+	isExpoGo := (scheme == "exp")
 
 	if decimalIPAddressPattern.MatchString(refurl.Hostname()) {
 		// IP address in decimal form also not allowed in redirects!
-		return false
+		if !isExpoGo {
+			return false
+		}
 	} else if ip := net.ParseIP(refurl.Hostname()); ip != nil {
-		return ip.IsLoopback()
+		if !isExpoGo {
+			return ip.IsLoopback()
+		}
 	} else if isHTTP && !regularHostname.MatchString(refurl.Hostname()) {
 		// hostname uses characters that are not typically used
 		return false
