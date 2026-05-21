@@ -162,6 +162,9 @@ func (p AppleProvider) GetUserData(ctx context.Context, tok *oauth2.Token) (*Use
 		return nil, err
 	}
 
+	// Remember provider access token for future account deletion
+	data.Metadata.ProviderAccessToken = tok.AccessToken
+
 	return data, nil
 }
 
