@@ -178,10 +178,12 @@ func (a *API) ResourceOwnerPasswordGrant(ctx context.Context, w http.ResponseWri
 		return apierrors.NewBadRequestError(apierrors.ErrorCodeInvalidCredentials, InvalidLoginMessage)
 	}
 
-	if params.Email != "" && !user.IsConfirmed() {
-		return apierrors.NewBadRequestError(apierrors.ErrorCodeEmailNotConfirmed, "Email not confirmed")
-	} else if params.Phone != "" && !user.IsPhoneConfirmed() {
-		return apierrors.NewBadRequestError(apierrors.ErrorCodePhoneNotConfirmed, "Phone not confirmed")
+	if !config.Mailer.AllowUnverifiedEmailSignIns {
+		if params.Email != "" && !user.IsConfirmed() {
+			return apierrors.NewBadRequestError(apierrors.ErrorCodeEmailNotConfirmed, "Email not confirmed")
+		} else if params.Phone != "" && !user.IsPhoneConfirmed() {
+			return apierrors.NewBadRequestError(apierrors.ErrorCodePhoneNotConfirmed, "Phone not confirmed")
+		}
 	}
 
 	var token *AccessTokenResponse
