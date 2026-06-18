@@ -723,7 +723,7 @@ func FindUserWithRefreshToken(tx *storage.Connection, dbEncryption conf.Database
 		return nil, nil, nil, SessionNotFoundError{}
 	}
 
-	if len(token) == 12 {
+	if len(token) == 12 || len(token) == 22 {
 		return findUserWithLegacyRefreshToken(tx, token, forUpdate)
 	}
 
