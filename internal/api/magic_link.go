@@ -135,6 +135,11 @@ func (a *API) MagicLink(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
+	// Unlike signup, a magic link request for an existing user never writes
+	// params.Data into user_metadata, so without this it would be silently
+	// unavailable to the template on every call after the first.
+	setRequestMetaData(user, extractRequestMetaData(params.Data))
+
 	err = db.Transaction(func(tx *storage.Connection) error {
 		if terr := models.NewAuditLogEntry(config.AuditLog, r, tx, user, models.UserRecoveryRequestedAction, "", nil); terr != nil {
 			return terr

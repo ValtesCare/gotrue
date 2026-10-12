@@ -705,6 +705,49 @@ func (a *API) sendMFAFactorUnenrolledNotification(r *http.Request, tx *storage.C
 	return nil
 }
 
+// extractRequestMetaData pops the "request" (or "Request") sub-object out of
+// data, if present, deleting it so the remainder of data is safe to persist
+// as ordinary user_metadata (e.g. via models.NewUser), and returns a copy of
+// its contents. The caller passes that copy to setRequestMetaData so email
+// templates can read it as `.Data.Request.*` for options that only apply to
+// this one auth request (e.g. `otpOnly`), without it ever being persisted.
+//
+// A client opts in by sending e.g. `data: { product: "x", request: { otpOnly: true } }`:
+// `product` is persisted/available as `.Data.product` as before, while
+// `otpOnly` is available only as `.Data.Request.otpOnly` and is stripped
+// before data is ever written to the database. Both "request" and "Request"
+// are accepted as the sub-key, since JSON callers may use either casing; if
+// both are somehow present, their contents are merged, with "Request"
+// taking precedence on key collisions.
+func extractRequestMetaData(data map[string]interface{}) map[string]interface{} {
+	requestData := make(map[string]interface{})
+
+	if raw, ok := data["request"].(map[string]interface{}); ok {
+		for k, v := range raw {
+			requestData[k] = v
+		}
+	}
+	delete(data, "request")
+
+	if raw, ok := data["Request"].(map[string]interface{}); ok {
+		for k, v := range raw {
+			requestData[k] = v
+		}
+	}
+	delete(data, "Request")
+
+	return requestData
+}
+
+// setRequestMetaData exposes requestData (see extractRequestMetaData) under
+// a dedicated, never-persisted "Request" namespace on the user's metadata.
+func setRequestMetaData(u *models.User, requestData map[string]interface{}) {
+	if u.UserMetaData == nil {
+		u.UserMetaData = map[string]interface{}{}
+	}
+	u.UserMetaData["Request"] = requestData
+}
+
 func (a *API) validateEmail(email string) (string, error) {
 	if email == "" {
 		return "", apierrors.NewBadRequestError(apierrors.ErrorCodeValidationFailed, "An email address is required")

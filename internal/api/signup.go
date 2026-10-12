@@ -127,6 +127,11 @@ func (a *API) Signup(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	// Pulled out before params.Data is used to build the persisted
+	// user_metadata (via ToUserModel/models.NewUser below), so a "request"
+	// sub-object never reaches the database.
+	requestData := extractRequestMetaData(params.Data)
+
 	var err error
 	flowType := getFlowFromChallenge(params.CodeChallenge)
 
@@ -247,6 +252,7 @@ func (a *API) Signup(w http.ResponseWriter, r *http.Request) error {
 						return terr
 					}
 				}
+				setRequestMetaData(user, requestData)
 				if terr = a.sendConfirmation(r, tx, user, flowType); terr != nil {
 					return terr
 				}
